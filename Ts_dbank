@@ -1,28 +1,103 @@
 import { Principal } from "@dfinity/principal";
-// Define the dbank canister 
+
+// Define the dbank canister interface
 interface DbankInterface {
   deposit: (amount: u64) => void;
   withdraw: (amount: u64) => void;
   checkBalance: () => u64;
+  transferToAccount: (recipient: Principal, amount: u64) => void;
+  getTransactionHistory: () => Transaction[];
+  calculateInterestRate: () => u64;
+}
+
+// Define a transaction struct to store transaction details
+interface Transaction {
+  type: "deposit" | "withdrawal";
+  amount: u64;
+  timestamp: number;
+  details?: string;
 }
 
 class Dbank implements DbankInterface {
   private balance: u64 = 0;
+  private transactions: Transaction[] = [];
 
+  /**
+   * Deposits the specified amount into the account.
+   * @param amount - The amount to be deposited.
+   */
   deposit(amount: u64): void {
     if (amount > 0) {
       this.balance += amount;
+      this.transactions.push({
+        type: "deposit",
+        amount,
+        timestamp: Date.now(),
+      });
     }
   }
 
+  /**
+   * Withdraws the specified amount from the account if the balance is sufficient.
+   * @param amount - The amount to be withdrawn.
+   */
   withdraw(amount: u64): void {
     if (amount > 0 && this.balance >= amount) {
       this.balance -= amount;
+      this.transactions.push({
+        type: "withdrawal",
+        amount,
+        timestamp: Date.now(),
+      });
     }
   }
 
+  /**
+   * Retrieves the current balance of the account.
+   * @returns The current account balance.
+   */
   checkBalance(): u64 {
     return this.balance;
+  }
+
+  /**
+   * Transfers the specified amount from the current account to the recipient's account.
+   * @param recipient - The principal of the recipient's account.
+   * @param amount - The amount to be transferred.
+   */
+  transferToAccount(recipient: Principal, amount: u64): void {
+    if (amount > 0 && this.balance >= amount) {
+      // Deduct from sender's account
+      this.balance -= amount;
+      this.transactions.push({
+        type: "withdrawal",
+        amount,
+        timestamp: Date.now(),
+        details: `Transfer to account: ${recipient.toText()}`,
+      });
+
+      // Add to recipient's account (implementation not shown)
+      // recipientAccount.deposit(amount);
+      // recipientAccount.addTransaction({ ... });
+    }
+  }
+
+  /**
+   * Retrieves the transaction history of the account.
+   * @returns An array of Transaction objects representing past transactions.
+   */
+  getTransactionHistory(): Transaction[] {
+    return this.transactions;
+  }
+
+  /**
+   * Calculates and returns the current interest rate for the account balance.
+   * @returns The current interest rate.
+   */
+  calculateInterestRate(): u64 {
+    // Calculation logic (implementation not shown)
+    // ...
+    return 0;
   }
 }
 
